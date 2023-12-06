@@ -1,1 +1,1 @@
-premier commit
+Projet d'entraînement d'une IA au Puissance 4 avec des algorithmes d'optimisation, supervisé et de renforcement.
