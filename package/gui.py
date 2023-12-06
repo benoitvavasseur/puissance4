@@ -1,13 +1,16 @@
+# gui.py
 import tkinter as tk
 from tkinter import messagebox
 from .game import ConnectFourGame
-
+import time
 
 class ConnectFourGUI:
-    def __init__(self, master):
+    def __init__(self, master, player1_algorithm=None, player2_algorithm=None):
         self.master = master
         self.master.title("Connect 4")
         self.game = ConnectFourGame()
+        self.player1_algorithm = player1_algorithm
+        self.player2_algorithm = player2_algorithm
         self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
 
@@ -32,13 +35,31 @@ class ConnectFourGUI:
 
     """Drops a piece in the given column."""
     def drop_piece(self, col):
-        if self.game.drop_piece(col):
+        if self.player1_algorithm is not None and self.game.current_player == 1:
+            # Player 1 is an AI
+            column = self.player1_algorithm.get_next_move(self.game.board)
+        elif self.player2_algorithm is not None and self.game.current_player == 2:
+            # Player 2 is an AI
+            column = self.player2_algorithm.get_next_move(self.game.board)
+        else:
+            # Players are human
+            column = col
+
+        if self.game.drop_piece(column):
             self.update_board()
             winner = self.game.check_winner()
             if winner:
                 self.handle_game_over(winner)
             elif self.game.is_full():
                 self.handle_game_over(None)
+
+            # Ajoutez cette vérification pour que l'IA joue automatiquement après le joueur précédent
+            if self.player1_algorithm is not None and self.game.current_player == 1:
+                # Appel récursif pour que l'IA joue automatiquement après une pause d'une seconde
+                self.master.after(1000, self.drop_piece, None)
+            if self.player2_algorithm is not None and self.game.current_player == 2:
+                # Appel récursif pour que l'IA joue automatiquement après une pause d'une seconde
+                self.master.after(1000, self.drop_piece, None)
 
     """Handles the end of the game."""
     def handle_game_over(self, winner):
