@@ -5,7 +5,7 @@ from package.reinforcement.qLearning import QLearningAlgorithm
 
 # Agent type configuration
 PLAYER1_TYPE = "QLEARNING"  # Options: "QLEARNING", "MINMAX", "HUMAN"
-PLAYER2_TYPE = "QLEARNING"  # Options: "QLEARNING", "MINMAX", "HUMAN"
+PLAYER2_TYPE = "MINMAX"  # Options: "QLEARNING", "MINMAX", "HUMAN"
 
 def create_agent(agent_type, player_number):
     if agent_type == "QLEARNING":

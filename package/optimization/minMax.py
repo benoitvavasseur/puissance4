@@ -5,30 +5,30 @@ MAX_DEPTH = 5
 
 class MiniMaxAlgorithm:
     """Returns the value of the column where MinMax should play"""
-    def get_next_move(self, board):
+    def get_next_move(self, board, available_columns):
         best_score = float('-inf')
         best_move = None
         alpha = float('-inf')
         beta = float('inf')
 
-        for move in self.get_possible_moves(board):
+        for move in available_columns:
             temp_board = self.make_move(board, move, 1)
-            score = self.minimax(temp_board, 0, alpha, beta, False)
+            score = self.minimax(temp_board, 0, alpha, beta, False, available_columns)
             if score > best_score:
                 best_score = score
                 best_move = move
 
         return best_move
     """MinMax algorithm: explores the branches of the decision tree to deduce the best score"""
-    def minimax(self, board, depth, alpha, beta, is_maximizing):
+    def minimax(self, board, depth, alpha, beta, is_maximizing, available_columns):
         if self.is_terminal_node(board) or depth == MAX_DEPTH:
             return self.evaluate_board(board, depth)
 
         if is_maximizing:
             max_eval = float('-inf')
-            for move in self.get_possible_moves(board):
+            for move in available_columns:
                 temp_board = self.make_move(board, move, 1)
-                eval = self.minimax(temp_board, depth + 1, alpha, beta, False)
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, False, available_columns)
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
                 if beta <= alpha:
@@ -36,9 +36,9 @@ class MiniMaxAlgorithm:
             return max_eval
         else:
             min_eval = float('inf')
-            for move in self.get_possible_moves(board):
+            for move in available_columns:
                 temp_board = self.make_move(board, move, 2)
-                eval = self.minimax(temp_board, depth + 1, alpha, beta, True)
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, True, available_columns)
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
                 if beta <= alpha:
