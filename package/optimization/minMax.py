@@ -4,31 +4,31 @@ MAX_DEPTH = 5
 
 
 class MiniMaxAlgorithm:
-
-    def get_next_move(self, board):
+    """Returns the value of the column where MinMax should play"""
+    def get_next_move(self, board, available_columns):
         best_score = float('-inf')
         best_move = None
         alpha = float('-inf')
         beta = float('inf')
 
-        for move in self.get_possible_moves(board):
+        for move in available_columns:
             temp_board = self.make_move(board, move, 1)
-            score = self.minimax(temp_board, 0, alpha, beta, False)
+            score = self.minimax(temp_board, 0, alpha, beta, False, available_columns)
             if score > best_score:
                 best_score = score
                 best_move = move
 
         return best_move
-
-    def minimax(self, board, depth, alpha, beta, is_maximizing):
+    """MinMax algorithm: explores the branches of the decision tree to deduce the best score"""
+    def minimax(self, board, depth, alpha, beta, is_maximizing, available_columns):
         if self.is_terminal_node(board) or depth == MAX_DEPTH:
             return self.evaluate_board(board, depth)
 
         if is_maximizing:
             max_eval = float('-inf')
-            for move in self.get_possible_moves(board):
+            for move in available_columns:
                 temp_board = self.make_move(board, move, 1)
-                eval = self.minimax(temp_board, depth + 1, alpha, beta, False)
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, False, available_columns)
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
                 if beta <= alpha:
@@ -36,15 +36,16 @@ class MiniMaxAlgorithm:
             return max_eval
         else:
             min_eval = float('inf')
-            for move in self.get_possible_moves(board):
+            for move in available_columns:
                 temp_board = self.make_move(board, move, 2)
-                eval = self.minimax(temp_board, depth + 1, alpha, beta, True)
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, True, available_columns)
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
                 if beta <= alpha:
                     break
             return min_eval
 
+    """Checks if a move is possible or not (full column)"""
     @staticmethod
     def get_possible_moves(board):
         return [c for c in range(7) if board[0][c] == 0]
@@ -58,6 +59,7 @@ class MiniMaxAlgorithm:
                 break
         return temp_board
 
+    """Checks if you have reached the end of the decision tree"""
     @staticmethod
     def is_terminal_node(board):
         # Utilise une logique similaire à check_winner de ConnectFourGame
@@ -87,6 +89,7 @@ class MiniMaxAlgorithm:
 
         return False
 
+    """Evaluate the board to return the score"""
     def evaluate_board(self, board, depth):
         if self.winning_move(board, 1):
             return 100000
@@ -128,6 +131,7 @@ class MiniMaxAlgorithm:
 
         return score
 
+    """Check if a player will win"""
     @staticmethod
     def winning_move(board, piece):
         # Constants for the board size
@@ -162,6 +166,7 @@ class MiniMaxAlgorithm:
 
         return False
 
+    """Evaluates the window to know if a line is blocked by the edges or not"""
     @staticmethod
     def evaluate_window(window, score_3_align, score_2_align):
         score = 0
