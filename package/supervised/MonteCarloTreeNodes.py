@@ -1,5 +1,4 @@
 import random
-from copy import deepcopy
 import math
 
 
@@ -14,6 +13,9 @@ class MonteCarloTreeNodes:
         self.untried_moves = self.get_possible_moves(board)
         self.player = player  # The player who has just moved
 
+    @staticmethod
+    def copy_board(board):
+        return [row[:] for row in board]
     def get_possible_moves(self, board):
         # Assume that the board is a list of lists, and that a 0 indicates an empty cell
         return [col for col in range(len(board[0])) if board[0][col] == 0]
@@ -33,25 +35,41 @@ class MonteCarloTreeNodes:
     def expand(self):
         # Take a move from the untried moves, play it on the board, and add a new node to the children
         move = self.untried_moves.pop()
-        new_board = deepcopy(
+        new_board = MonteCarloTreeNodes.copy_board(
             self.board)  # Assume that this function makes a move on the board and returns the new board
         new_node = MonteCarloTreeNodes(new_board, move=move, parent=self, player=3 - self.player)
         self.children.append(new_node)
         return new_node
 
-    def simulate(self):
-        # Randomly play out a game from the current position to a terminal position
-        # Assume there's a method to play a move and return the new state and the next player
-        current_state = deepcopy(self.board)
+    def simulate(self,  max_depth=100):
+        # Copy the current state to avoid modifying the original board
+        current_state = MonteCarloTreeNodes.copy_board(self.board)
         current_player = self.player
-        while True:  # You will need to replace this with the actual condition to check for a game over
+
+        while True:
+            # Get all possible moves for the current state
             possible_moves = self.get_possible_moves(current_state)
-            if not possible_moves:  # No more moves, it's a draw
-                return 0
+
+            # If there are no possible moves, it's a draw
+            if not possible_moves:
+                return 0  # Return 0 or another value that signifies a draw
+
+            # Randomly select one of the possible moves
             move = random.choice(possible_moves)
-            current_state, current_player = self.play_move(current_state, move, current_player)
-            if self.is_winner(current_state, current_player):  # Assume this method checks for a winner
-                return current_player
+
+            # Play the move and get the new state
+            new_state, next_player = self.play_move(current_state, move, current_player)
+
+            # If there's no next player, the game is over
+            if next_player is None:
+                if self.is_winner(new_state, current_player):
+                    return current_player  # Current player won
+                else:
+                    return 0  # It's a draw
+
+            # If the game isn't over, prepare for the next iteration
+            current_state = new_state
+            current_player = next_player
 
     def update(self, result):
         # Update this node's data based on the simulation result
@@ -61,7 +79,7 @@ class MonteCarloTreeNodes:
 
     def play_move(self, board, column, player):
         # Deep copy the board to avoid modifying the original
-        new_board = deepcopy(board)
+        new_board = MonteCarloTreeNodes.copy_board(board)
 
         # Check if the move is valid (column is not full)
         if new_board[0][column] != 0:
@@ -96,16 +114,34 @@ class MonteCarloTreeNodes:
     def check_for_win(self, player):
         # Check horizontal, vertical, and diagonal lines for a win
         board = self.board
-        for row in range(6):
-            for col in range(7):
-                if col <= 3 and all(board[row][col + i] == player for i in range(4)):
+        # Define the number of rows and columns
+        ROWS, COLS = len(board), len(board[0])
+
+        # Check horizontal lines
+        for row in range(ROWS):
+            for col in range(COLS - 3):
+                if all(board[row][col + i] == player for i in range(4)):
                     return True
-                if row <= 2 and all(board[row + i][col] == player for i in range(4)):
+
+        # Check vertical lines
+        for col in range(COLS):
+            for row in range(ROWS - 3):
+                if all(board[row + i][col] == player for i in range(4)):
                     return True
-                if row <= 2 and col <= 3 and all(board[row + i][col + i] == player for i in range(4)):
+
+        # Check for positive diagonal lines
+        for row in range(ROWS - 3):
+            for col in range(COLS - 3):
+                if all(board[row + i][col + i] == player for i in range(4)):
                     return True
-                if row >= 3 and col <= 3 and all(board[row - i][col + i] == player for i in range(4)):
+
+        # Check for negative diagonal lines
+        for row in range(3, ROWS):
+            for col in range(COLS - 3):
+                if all(board[row - i][col + i] == player for i in range(4)):
                     return True
+
+        # If no win condition is met
         return False
 
     def is_board_full(self):

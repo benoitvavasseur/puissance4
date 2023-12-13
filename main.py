@@ -1,27 +1,45 @@
+import tkinter as tk
 from package.gui import ConnectFourGUI
 from package.optimization.minMax import MiniMaxAlgorithm
-import tkinter as tk
+from package.reinforcement.qLearning import QLearningAlgorithm
+from package.supervised.MonteCarloTree import MonteCarloTreeSearch
 
-from puissance4.package.supervised.MonteCarloTree import MonteCarloTreeSearch
+# Agent type configuration
+PLAYER1_TYPE = "MONTECARLO"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"
+PLAYER2_TYPE = "MINMAX"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"
 
+
+def create_agent(agent_type, player_number):
+    if agent_type == "QLEARNING":
+        agent = QLearningAlgorithm()
+        try:
+            agent.load_q_table(f"package/reinforcement/q_table_player{player_number}.json")
+        except FileNotFoundError:
+            pass
+        return agent
+    elif agent_type == "MINMAX":
+        return MiniMaxAlgorithm()
+    elif agent_type == "MONTECARLO":
+        return MonteCarloTreeSearch()
+    else:
+        return None
 
 def main():
     root = tk.Tk()
 
-    #Player human : player_algorithm=None
-    #Player MinMaxAlgorithm : player_algorithm=MiniMaxAlgorithm()
-    #Player MonteCarloAlgorithm : player_algorithm=MonteCarloTree()
+    player1_agent = create_agent(PLAYER1_TYPE, 1)
+    player2_agent = create_agent(PLAYER2_TYPE, 2)
 
-    minimax_algorithm = MiniMaxAlgorithm()
-    monte_carlo_algorithm = MonteCarloTreeSearch(time_limit=1.0)
+    gui = ConnectFourGUI(root, player1_algorithm=player1_agent, player2_algorithm=player2_agent)
 
-    # Example : MiniMaw vs MonteCarlo
-    gui_minimax_vs_montecarlo = ConnectFourGUI(root, player1_algorithm=minimax_algorithm, player2_algorithm=monte_carlo_algorithm)
-    gui_minimax_vs_montecarlo.master.mainloop()
+    if isinstance(player1_agent, QLearningAlgorithm):
+        gui.add_on_close_callback(lambda: player1_agent.save_q_table("package/reinforcement/q_table_player1.json"))
 
-    # Example : Player vs. MiniMax
-    #gui_player_vs_minimax = ConnectFourGUI(root, player1_algorithm=MiniMaxAlgorithm(), player2_algorithm=MiniMaxAlgorithm())
-    #gui_player_vs_minimax.master.mainloop()
+    if isinstance(player2_agent, QLearningAlgorithm):
+        gui.add_on_close_callback(lambda: player2_agent.save_q_table("package/reinforcement/q_table_player2.json"))
+
+    root.protocol("WM_DELETE_WINDOW", gui.close)
+    root.mainloop()
 
 if __name__ == "__main__":
     main()

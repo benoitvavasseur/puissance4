@@ -4,12 +4,12 @@ import time
 
 
 class MonteCarloTreeSearch:
-    def __init__(self, time_limit=None, iteration_limit=None):
+    def __init__(self, time_limit=1.0, iteration_limit=100):
         self.time_limit = time_limit
         self.iteration_limit = iteration_limit
         self.start_time = None
 
-    def get_next_move(self, board):
+    def get_next_move(self, board, available_columns=None):
         current_player = self.determine_current_player(board)
         self.start_time = time.time()
         root = MonteCarloTreeNodes(deepcopy(board), player=current_player)
