@@ -53,12 +53,12 @@ class ConnectFourGUI:
             elif self.game.is_full():
                 self.handle_game_over(None)
 
-            # Ajoutez cette vérification pour que l'IA joue automatiquement après le joueur précédent
+            # l'IA joue automatiquement après le joueur précédent
             if self.player1_algorithm is not None and self.game.current_player == 1:
-                # Appel récursif pour que l'IA joue automatiquement après une pause d'une seconde
+                #pause d'une seconde
                 self.master.after(1000, self.drop_piece, None)
             if self.player2_algorithm is not None and self.game.current_player == 2:
-                # Appel récursif pour que l'IA joue automatiquement après une pause d'une seconde
+                #pause d'une seconde
                 self.master.after(1000, self.drop_piece, None)
 
     """Handles the end of the game."""
