@@ -9,7 +9,7 @@ def main():
     #Player MinMaxAlgorithm : player_algorithm=MiniMaxAlgorithm()
 
     # Example : Player vs. MiniMax
-    gui_player_vs_minimax = ConnectFourGUI(root, player1_algorithm=MiniMaxAlgorithm(), player2_algorithm=MiniMaxAlgorithm())
+    gui_player_vs_minimax = ConnectFourGUI(root, player1_algorithm=None, player2_algorithm=MiniMaxAlgorithm())
     gui_player_vs_minimax.master.mainloop()
 
 if __name__ == "__main__":
