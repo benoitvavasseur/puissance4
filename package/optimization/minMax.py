@@ -1,6 +1,6 @@
 # minMax.py
 
-MAX_DEPTH = 3
+MAX_DEPTH = 5
 
 
 class MiniMaxAlgorithm:
@@ -8,34 +8,42 @@ class MiniMaxAlgorithm:
     def get_next_move(self, board):
         best_score = float('-inf')
         best_move = None
+        alpha = float('-inf')
+        beta = float('inf')
 
         for move in self.get_possible_moves(board):
             temp_board = self.make_move(board, move, 1)
-            score = self.minimax(temp_board, 0, False)
+            score = self.minimax(temp_board, 0, alpha, beta, False)
             if score > best_score:
                 best_score = score
                 best_move = move
 
         return best_move
 
-    def minimax(self, board, depth, is_maximizing):
+    def minimax(self, board, depth, alpha, beta, is_maximizing):
         if self.is_terminal_node(board) or depth == MAX_DEPTH:
             return self.evaluate_board(board, depth)
 
         if is_maximizing:
-            best_score = float('-inf')
+            max_eval = float('-inf')
             for move in self.get_possible_moves(board):
                 temp_board = self.make_move(board, move, 1)
-                score = self.minimax(temp_board, depth + 1, False)
-                best_score = max(best_score, score)
-            return best_score
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, False)
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+            return max_eval
         else:
-            best_score = float('inf')
+            min_eval = float('inf')
             for move in self.get_possible_moves(board):
                 temp_board = self.make_move(board, move, 2)
-                score = self.minimax(temp_board, depth + 1, True)
-                best_score = min(best_score, score)
-            return best_score
+                eval = self.minimax(temp_board, depth + 1, alpha, beta, True)
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+            return min_eval
 
     @staticmethod
     def get_possible_moves(board):
@@ -80,10 +88,17 @@ class MiniMaxAlgorithm:
         return False
 
     def evaluate_board(self, board, depth):
+        if self.winning_move(board, 1):
+            return 100000
+
+        if self.winning_move(board, 2):
+            return -100000
         score = 0
         score_center = 3
         score_3_align = 5 * (10 - depth)
         score_2_align = 2 * (10 - depth)
+
+
 
         center_array = [board[i][3] for i in range(6)]
         center_count = center_array.count(1)
@@ -112,6 +127,40 @@ class MiniMaxAlgorithm:
                 score += self.evaluate_window(window, score_3_align, score_2_align)
 
         return score
+
+    @staticmethod
+    def winning_move(board, piece):
+        # Constants for the board size
+        ROW_COUNT = 6
+        COLUMN_COUNT = 7
+
+        # Check horizontal locations for win
+        for c in range(COLUMN_COUNT - 3):
+            for r in range(ROW_COUNT):
+                if board[r][c] == piece and board[r][c + 1] == piece and board[r][c + 2] == piece and board[r][c + 3] == piece:
+                    return True
+
+        # Check vertical locations for win
+        for c in range(COLUMN_COUNT):
+            for r in range(ROW_COUNT - 3):
+                if board[r][c] == piece and board[r + 1][c] == piece and board[r + 2][c] == piece and board[r + 3][c] == piece:
+                    return True
+
+        # Check positively sloped diagonals
+        for c in range(COLUMN_COUNT - 3):
+            for r in range(ROW_COUNT - 3):
+                if board[r][c] == piece and board[r + 1][c + 1] == piece and board[r + 2][c + 2] == piece and \
+                        board[r + 3][c + 3] == piece:
+                    return True
+
+        # Check negatively sloped diagonals
+        for c in range(COLUMN_COUNT - 3):
+            for r in range(3, ROW_COUNT):
+                if board[r][c] == piece and board[r - 1][c + 1] == piece and board[r - 2][c + 2] == piece and \
+                        board[r - 3][c + 3] == piece:
+                    return True
+
+        return False
 
     @staticmethod
     def evaluate_window(window, score_3_align, score_2_align):
