@@ -1,6 +1,8 @@
 # gui.py
 import tkinter as tk
 from tkinter import messagebox
+
+from package.reinforcement.qLearning import QLearningAlgorithm
 from .game import ConnectFourGame
 import time
 
@@ -13,6 +15,16 @@ class ConnectFourGUI:
         self.player2_algorithm = player2_algorithm
         self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
+        self.on_close_callbacks = []
+
+    def add_on_close_callback(self, callback):
+        self.on_close_callbacks.append(callback)
+
+    def close(self):
+        print("Closing the application and calling callbacks")
+        for callback in self.on_close_callbacks:
+            callback()
+        self.master.destroy()
 
     """Creates the widgets."""
     def create_widgets(self):
@@ -35,46 +47,65 @@ class ConnectFourGUI:
 
     """Drops a piece in the given column."""
     def drop_piece(self, col):
+        available_columns = [i for i in range(7) if self.game.board[0][i] == 0]
+        # Current state before playing
+        current_state = str(self.game.board)
         if self.player1_algorithm is not None and self.game.current_player == 1:
             # Player 1 is an AI
-            column = self.player1_algorithm.get_next_move(self.game.board)
+            column = self.player1_algorithm.get_next_move(self.game.board, available_columns)
         elif self.player2_algorithm is not None and self.game.current_player == 2:
             # Player 2 is an AI
-            column = self.player2_algorithm.get_next_move(self.game.board)
+            column = self.player2_algorithm.get_next_move(self.game.board, available_columns)
         else:
             # Players are human
             column = col
 
         if self.game.drop_piece(column):
             self.update_board()
+
             winner = self.game.check_winner()
+            done = winner is not None or self.game.is_full()
+
+            # Update of table Q only if the agent is of type QLearningAlgorithm
+            current_player_agent = self.player1_algorithm if self.game.current_player == 1 else self.player2_algorithm
+            if isinstance(current_player_agent, QLearningAlgorithm):
+                reward = self.calculate_reward_qLearning(winner, done)
+                next_state = self.game.board
+                action = column
+                current_player_agent.update_q_table(current_state, action, reward, next_state, done)
+
             if winner:
                 self.handle_game_over(winner)
             elif self.game.is_full():
                 self.handle_game_over(None)
 
-            # l'IA joue automatiquement après le joueur précédent
+            # Check so that the AI automatically plays after the previous player
             if self.player1_algorithm is not None and self.game.current_player == 1:
-                #pause d'une seconde
-                self.master.after(1000, self.drop_piece, None)
+                # Recursive call so that the AI plays automatically after a one-second pause
+                self.master.after(100, self.drop_piece, None)
             if self.player2_algorithm is not None and self.game.current_player == 2:
-                #pause d'une seconde
-                self.master.after(1000, self.drop_piece, None)
+                # Recursive call so that the AI plays automatically after a one-second pause
+                self.master.after(100, self.drop_piece, None)
+
 
     """Handles the end of the game."""
     def handle_game_over(self, winner):
         if winner:
-            win_text = f"Joueur {winner} a gagné !"
+            win_text = f"Player {winner} won !"
         else:
-            win_text = "Match nul !"
+            win_text = "Draw !"
 
         self.display_game_over_message(win_text)
-        self.game.reset_board()
-        self.update_board()
+
 
     """Displays a message when the game is over."""
     def display_game_over_message(self, message):
-        tk.messagebox.showinfo("Fin de la partie", message)
+        restart = tk.messagebox.askyesno("Restart", message + " Would you like to start a new game?")
+        if restart:
+            self.game.reset_board()
+            self.update_board()
+        else:
+            self.close()
 
     """Updates the board."""
     def update_board(self):
@@ -88,6 +119,19 @@ class ConnectFourGUI:
                     color = "yellow"
 
                 self.canvas.itemconfig(self.board_circles[row][col], fill=color)
+
+    """Calculates the reward for the current player. Only used for reinforcement learning."""
+    def calculate_reward_qLearning(self, winner, done):
+        if winner == self.game.current_player:
+            # Reward to win
+            return 1
+        elif done:
+            # Neutral reward for a draw
+            return 0
+        else:
+            # Small penalty to continue play
+            return -0.1
+
 
 def main():
     root = tk.Tk()
