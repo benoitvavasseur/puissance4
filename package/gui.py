@@ -7,7 +7,7 @@ from .game import ConnectFourGame
 import time
 
 class ConnectFourGUI:
-    def __init__(self, master, player1_algorithm=None, player2_algorithm=None):
+    def __init__(self, master, player1_algorithm=None, player2_algorithm=None, num_games=1):
         self.master = master
         self.master.title("Connect 4")
         self.game = ConnectFourGame()
@@ -16,6 +16,12 @@ class ConnectFourGUI:
         self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
         self.on_close_callbacks = []
+        self.num_games = num_games
+        self.games_played = 0
+
+        # Initiates the first move if both players are AIs
+        if self.player1_algorithm is not None and self.player2_algorithm is not None:
+            self.master.after(1000, lambda: self.drop_piece(None))
 
     def add_on_close_callback(self, callback):
         self.on_close_callbacks.append(callback)
@@ -62,6 +68,7 @@ class ConnectFourGUI:
 
         if self.game.drop_piece(column):
             self.update_board()
+            print(f"drop_piece called for column {column}")
 
             winner = self.game.check_winner()
             done = winner is not None or self.game.is_full()
@@ -82,21 +89,43 @@ class ConnectFourGUI:
             # Check so that the AI automatically plays after the previous player
             if self.player1_algorithm is not None and self.game.current_player == 1:
                 # Recursive call so that the AI plays automatically after a one-second pause
-                self.master.after(100, self.drop_piece, None)
+                self.master.after(500, self.drop_piece, None)
             if self.player2_algorithm is not None and self.game.current_player == 2:
                 # Recursive call so that the AI plays automatically after a one-second pause
-                self.master.after(100, self.drop_piece, None)
+                self.master.after(500, self.drop_piece, None)
 
 
     """Handles the end of the game."""
     def handle_game_over(self, winner):
+        print(f"Game over. Winner: {winner}")
+
+        # Displays a message based on the result
         if winner:
-            win_text = f"Player {winner} won !"
+            win_text = f"Player {winner} won!"
         else:
-            win_text = "Draw !"
+            win_text = "It's a draw!"
 
-        self.display_game_over_message(win_text)
+        # If at least one of the players is human
+        if self.player1_algorithm is None or self.player2_algorithm is None:
+            # Displays the end-of-game message and asks if they want to play again
+            self.display_game_over_message(win_text)
+        else:
+            # Increments the games played counter
+            self.games_played += 1
 
+            # If both players are AIs, check whether the number of games played is less than the total number of games to be played
+            if self.games_played < self.num_games:
+                # Resets the board for a new game
+                self.game.reset_board()
+                self.update_board()
+
+                # Automatically start the next game
+                print("Scheduling next game in 2 seconds...")
+                self.master.after(2000, lambda: self.drop_piece(None))
+            else:
+                # If all the games have been played, close the application
+                print("All games played. Closing application.")
+                self.close()
 
     """Displays a message when the game is over."""
     def display_game_over_message(self, message):
@@ -119,6 +148,8 @@ class ConnectFourGUI:
                     color = "yellow"
 
                 self.canvas.itemconfig(self.board_circles[row][col], fill=color)
+        self.master.update_idletasks() #lorsque deux minmax jouent plusieurs parties, le canvas ne se met pas à jour sans
+
 
     """Calculates the reward for the current player. Only used for reinforcement learning."""
     def calculate_reward_qLearning(self, winner, done):
