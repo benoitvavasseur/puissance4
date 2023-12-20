@@ -1,6 +1,6 @@
 import json
 
-from package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
+from puissance4.package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
 from copy import deepcopy
 import time
 
@@ -10,31 +10,36 @@ class MonteCarloTreeSearch:
         self.time_limit = time_limit
         self.iteration_limit = iteration_limit
         self.start_time = None
-        self.historical_data = self.load_historical_data() if use_historical_data else {}
+        self.historical_data = self.load_historical_data()
 
     def load_historical_data(self):
         try:
             with open("game_history.json", "r") as file:
-                return [json.loads(line) for line in file]
+                historical_data = json.load(file)
         except FileNotFoundError:
-            return []
+            return {}
+        return self.analyze_historical_data(historical_data)
 
-    def analyze_historical_data(self):
+    def analyze_historical_data(self, raw_data):
         winning_moves = {}
-        for game in self.historical_data:
+        for game in raw_data:
             if game["winner"]:
                 for move in game["moves"]:
                     if move[0] == game["winner"]:
                         winning_moves[move[1]] = winning_moves.get(move[1], 0) + 1
         return winning_moves
+
     def get_next_move(self, board, available_columns=None):
         current_player = self.determine_current_player(board)
         self.start_time = time.time()
-        root = MonteCarloTreeNodes(deepcopy(board), player=current_player)
+        root = MonteCarloTreeNodes(deepcopy(board), player=current_player, historical_data=self.historical_data)
+        iterations = 100
 
-        iterations = 0
         while self.time_limit_not_reached() and self.iteration_limit_not_reached(iterations):
             node = self.select_node(root)
+            if node is None:
+                break
+
             winner = node.simulate()
             node.backpropagate(winner)
             iterations += 1
@@ -54,6 +59,10 @@ class MonteCarloTreeSearch:
     def select_node(self, node):
         selected_child = None
         best_value = -float('inf')
+
+        if not node.children:
+            return node
+
         for child in node.children:
             ucb1_value = child.calculate_ucb1()
             if child.move in self.historical_data:

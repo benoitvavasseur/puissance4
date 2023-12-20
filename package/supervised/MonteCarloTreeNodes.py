@@ -23,8 +23,7 @@ class MonteCarloTreeNodes:
 
     def select_child(self):
         selected_child = None
-        # The more the data in the game_history.json are viable the more you can increase the historical_bias
-        historical_bias = 0.15
+        historical_bias = 0.15  # Adjust this value depending on the accuracy of the game in the game_history.json
         best_value = -float('inf')
         for child in self.children:
             ucb1_value = self.calculate_ucb1(child)
