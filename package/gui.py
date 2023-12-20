@@ -13,8 +13,10 @@ class ConnectFourGUI:
         self.game = ConnectFourGame()
         self.player1_algorithm = player1_algorithm
         self.player2_algorithm = player2_algorithm
-        self.player1_algorithm.num_games_won = 0
-        self.player2_algorithm.num_games_won = 0
+        if self.player1_algorithm is not None:
+            self.player1_algorithm.num_games_won = 0
+        if self.player2_algorithm is not None:
+            self.player2_algorithm.num_games_won = 0
         self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
         self.on_close_callbacks = []
