@@ -1,6 +1,6 @@
 import json
 
-from puissance4.package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
+from package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
 from copy import deepcopy
 import time
 

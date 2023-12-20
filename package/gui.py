@@ -3,9 +3,8 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 
-from puissance4.package.reinforcement.qLearning import QLearningAlgorithm
+from package.reinforcement.qLearning import QLearningAlgorithm
 from .game import ConnectFourGame
-import time
 
 
 class ConnectFourGUI:
@@ -134,8 +133,6 @@ class ConnectFourGUI:
         else:
             win_text = "It's a draw!"
 
-        self.save_q_tables_if_needed()
-
         # If at least one of the players is human
         if self.player1_algorithm is None or self.player2_algorithm is None:
             # Displays the end-of-game message and asks if they want to play again
@@ -198,12 +195,6 @@ class ConnectFourGUI:
             # Small penalty to continue play
             return -0.1
 
-    def save_q_tables_if_needed(self):
-        if isinstance(self.player1_algorithm, QLearningAlgorithm):
-            self.player1_algorithm.save_q_table("package/reinforcement/q_table_player1.json")
-
-        if isinstance(self.player2_algorithm, QLearningAlgorithm):
-            self.player2_algorithm.save_q_table("package/reinforcement/q_table_player2.json")
 
 def main():
     root = tk.Tk()
