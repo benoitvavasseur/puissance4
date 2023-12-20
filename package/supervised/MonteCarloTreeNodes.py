@@ -41,52 +41,53 @@ class MonteCarloTreeNodes:
         return self.wins / self.visits + exploration_param * math.sqrt(math.log(self.parent.visits) / self.visits)
 
     def expand(self):
-        # Take a move from the untried moves, play it on the board, and add a new node to the children
-        move = self.untried_moves.pop()
-        new_board = MonteCarloTreeNodes.copy_board(
-            self.board)  # Assume that this function makes a move on the board and returns the new board
-        new_node = MonteCarloTreeNodes(new_board, move=move, parent=self, player=3 - self.player)
-        self.children.append(new_node)
-        return new_node
+        # Only expand if there are untried moves left
+        if self.untried_moves:
+            move = random.choice(self.untried_moves)
+            self.untried_moves.remove(move)  # Or you can choose randomly
+            new_board, _ = self.play_move(self.board, move, self.player)  # This method must return the new board state
 
-    def simulate(self, max_depth=100):
-        # Copy the current state to avoid modifying the original board
-        current_state = MonteCarloTreeNodes.copy_board(self.board)
-        current_player = self.player
+            # Ensure that new_board is not None and is a valid board state before proceeding
+            if new_board:
+                new_node = MonteCarloTreeNodes(new_board, move=move, parent=self, player=3 - self.player,
+                                               historical_data=self.historical_data)
+                self.children.append(new_node)
+
+            # Debugging: Print all children after expansion
+            print(f"Children after expansion: {[child.move for child in self.children]}")
+
+        return self
+
+    def simulate(self):
+        current_state, current_player = self.board, self.player
 
         while True:
-            # Get all possible moves for the current state
             possible_moves = self.get_possible_moves(current_state)
 
-            # If there are no possible moves, it's a draw
             if not possible_moves:
-                return 0  # Return 0 or another value that signifies a draw
+                return 0
 
-            # Randomly select one of the possible moves
             move = random.choice(possible_moves)
-
-            # Play the move and get the new state
             new_state, next_player = self.play_move(current_state, move, current_player)
 
-            # If there's no next player, the game is over
             if next_player is None:
                 if self.is_winner(new_state, current_player):
-                    return current_player  # Current player won
+                    return current_player
                 else:
-                    return 0  # It's a draw
+                    return 0
 
-            # If the game isn't over, prepare for the next iteration
-            current_state = new_state
+            new_state_tuple = self.play_move(current_state, move, current_player)
+            new_board_state, next_player = new_state_tuple
+
+            current_state = MonteCarloTreeNodes.copy_board(new_board_state)
             current_player = next_player
 
     def update(self, result):
-        # Update this node's data based on the simulation result
         self.visits += 1
         if self.player == result:
             self.wins += 1
 
     def play_move(self, board, column, player):
-        # Deep copy the board to avoid modifying the original
         new_board = MonteCarloTreeNodes.copy_board(board)
 
         # Check if the move is valid (column is not full)
@@ -177,12 +178,14 @@ class MonteCarloTreeNodes:
     def backpropagate(self, result):
         # Increment the visit count for this node
         self.visits += 1
-
-        # If the result of the simulation is a win for this node's player, increment the win count
-        if result == self.player:
+        if self.player == result:
             self.wins += 1
 
-        # If there's a parent node, recursively backpropagate the result up the tree
+        # Debugging: Print the current node's stats after backpropagation
+        print(
+            f"Backpropagating node: Move = {self.move}, Player = {self.player}, Wins = {self.wins}, Visits = {self.visits}")
+
+        # Recursive backpropagation
         if self.parent:
             self.parent.backpropagate(result)
 

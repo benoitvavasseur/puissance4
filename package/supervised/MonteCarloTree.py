@@ -6,7 +6,7 @@ import time
 
 
 class MonteCarloTreeSearch:
-    def __init__(self, time_limit=1.0, iteration_limit=100):
+    def __init__(self, time_limit=1.0, iteration_limit=10000):
         self.time_limit = time_limit
         self.iteration_limit = iteration_limit
         self.start_time = None
@@ -33,13 +33,14 @@ class MonteCarloTreeSearch:
         current_player = self.determine_current_player(board)
         self.start_time = time.time()
         root = MonteCarloTreeNodes(deepcopy(board), player=current_player, historical_data=self.historical_data)
-        iterations = 100
+        iterations = 0
 
         while self.time_limit_not_reached() and self.iteration_limit_not_reached(iterations):
             node = self.select_node(root)
-            if node is None:
-                break
+            if not node.is_fully_expanded():
+                node = node.expand()
 
+            # Now, simulate a game from this new node
             winner = node.simulate()
             node.backpropagate(winner)
             iterations += 1
@@ -77,8 +78,10 @@ class MonteCarloTreeSearch:
         best_win_ratio = -float('inf')
         best_move = None
 
+        print("Child nodes win/visit ratios:")
         for child in root.children:
             win_ratio = child.wins / child.visits if child.visits > 0 else 0
+            print(f"Column {child.move}: Wins = {child.wins}, Visits = {child.visits}, Win ratio = {win_ratio}")
             if win_ratio > best_win_ratio:
                 best_win_ratio = win_ratio
                 best_move = child.move
