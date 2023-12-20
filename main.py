@@ -5,11 +5,13 @@ from package.reinforcement.qLearning import QLearningAlgorithm
 from package.supervised.MonteCarloTree import MonteCarloTreeSearch
 
 # Agent type configuration
-PLAYER1_TYPE = "MONTECARLO"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"
+PLAYER1_TYPE = "QLEARNING"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"
 PLAYER2_TYPE = "MINMAX"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"
-NUM_GAMES = 1
+NUM_GAMES = 10
 
 """Selects the type of agents to play the game"""
+
+
 def select_agent_types():
     def submit():
         global PLAYER1_TYPE, PLAYER2_TYPE, NUM_GAMES
@@ -50,7 +52,10 @@ def select_agent_types():
     selection_window.mainloop()
     return PLAYER1_TYPE, PLAYER2_TYPE, NUM_GAMES
 
+
 """Creates the 2 agents."""""
+
+
 def create_agent(agent_type, player_number):
     if agent_type == "QLEARNING":
         agent = QLearningAlgorithm()
@@ -66,7 +71,10 @@ def create_agent(agent_type, player_number):
     else:
         return None
 
+
 """ Main function """
+
+
 def main():
     player1_type, player2_type, num_games = select_agent_types()
 
@@ -85,6 +93,7 @@ def main():
 
     root.protocol("WM_DELETE_WINDOW", gui.close)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

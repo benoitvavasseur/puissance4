@@ -1,3 +1,5 @@
+import json
+
 from package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
 from copy import deepcopy
 import time
@@ -8,7 +10,23 @@ class MonteCarloTreeSearch:
         self.time_limit = time_limit
         self.iteration_limit = iteration_limit
         self.start_time = None
+        self.historical_data = self.load_historical_data() if use_historical_data else {}
 
+    def load_historical_data(self):
+        try:
+            with open("game_history.json", "r") as file:
+                return [json.loads(line) for line in file]
+        except FileNotFoundError:
+            return []
+
+    def analyze_historical_data(self):
+        winning_moves = {}
+        for game in self.historical_data:
+            if game["winner"]:
+                for move in game["moves"]:
+                    if move[0] == game["winner"]:
+                        winning_moves[move[1]] = winning_moves.get(move[1], 0) + 1
+        return winning_moves
     def get_next_move(self, board, available_columns=None):
         current_player = self.determine_current_player(board)
         self.start_time = time.time()
@@ -34,13 +52,16 @@ class MonteCarloTreeSearch:
         return iterations < self.iteration_limit
 
     def select_node(self, node):
-        # Select a node that maximizes the UCT (Upper Confidence bounds applied to Trees) value
-        while not node.is_terminal_node():
-            if node.is_fully_expanded():
-                node = node.get_best_child()
-            else:
-                return node.expand()
-        return node
+        selected_child = None
+        best_value = -float('inf')
+        for child in node.children:
+            ucb1_value = child.calculate_ucb1()
+            if child.move in self.historical_data:
+                ucb1_value += self.historical_data[child.move]
+            if ucb1_value > best_value:
+                selected_child = child
+                best_value = ucb1_value
+        return selected_child
 
     def get_best_move(self, root):
         # Select the child with the highest win ratio

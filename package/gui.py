@@ -1,10 +1,12 @@
 # gui.py
+import json
 import tkinter as tk
 from tkinter import messagebox
 
 from package.reinforcement.qLearning import QLearningAlgorithm
 from .game import ConnectFourGame
 import time
+
 
 class ConnectFourGUI:
     def __init__(self, master, player1_algorithm=None, player2_algorithm=None, num_games=1):
@@ -13,7 +15,8 @@ class ConnectFourGUI:
         self.game = ConnectFourGame()
         self.player1_algorithm = player1_algorithm
         self.player2_algorithm = player2_algorithm
-        self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
+        self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in
+                        range(7)]
         self.create_widgets()
         self.on_close_callbacks = []
         self.num_games = num_games
@@ -22,6 +25,24 @@ class ConnectFourGUI:
         # Initiates the first move if both players are AIs
         if self.player1_algorithm is not None and self.player2_algorithm is not None:
             self.master.after(1000, lambda: self.drop_piece(None))
+
+    def record_game_data(self, winner):
+        moves = [(player, int(move)) for player, move in self.game.get_all_moves()]
+        new_game_data = {
+            "moves": moves,
+            "winner": int(winner) if winner is not None else None
+        }
+
+        try:
+            with open("game_history.json", "r") as file:
+                game_history = json.load(file)
+        except FileNotFoundError:
+            game_history = []
+
+        game_history.append(new_game_data)
+
+        with open("game_history.json", "w") as file:
+            json.dump(game_history, file, indent=4)
 
     def add_on_close_callback(self, callback):
         self.on_close_callbacks.append(callback)
@@ -33,6 +54,7 @@ class ConnectFourGUI:
         self.master.destroy()
 
     """Creates the widgets."""
+
     def create_widgets(self):
         for i, button in enumerate(self.buttons):
             button.grid(row=0, column=i)
@@ -42,16 +64,19 @@ class ConnectFourGUI:
         self.draw_board()
 
     """Draws the board."""
+
     def draw_board(self):
         self.board_circles = []
         for row in range(6):
             row_circles = []
             for col in range(7):
-                circle = self.canvas.create_oval(col*100+10, row*100+10, col*100+90, row*100+90, fill="white", outline="black")
+                circle = self.canvas.create_oval(col * 100 + 10, row * 100 + 10, col * 100 + 90, row * 100 + 90,
+                                                 fill="white", outline="black")
                 row_circles.append(circle)
             self.board_circles.append(row_circles)
 
     """Drops a piece in the given column."""
+
     def drop_piece(self, col):
         available_columns = [i for i in range(7) if self.game.board[0][i] == 0]
         # Current state before playing
@@ -94,10 +119,11 @@ class ConnectFourGUI:
                 # Recursive call so that the AI plays automatically after a one-second pause
                 self.master.after(500, self.drop_piece, None)
 
-
     """Handles the end of the game."""
+
     def handle_game_over(self, winner):
         print(f"Game over. Winner: {winner}")
+        self.record_game_data(winner)
 
         # Displays a message based on the result
         if winner:
@@ -115,19 +141,18 @@ class ConnectFourGUI:
 
             # If both players are AIs, check whether the number of games played is less than the total number of games to be played
             if self.games_played < self.num_games:
-                # Resets the board for a new game
                 self.game.reset_board()
                 self.update_board()
-
-                # Automatically start the next game
                 print("Scheduling next game in 2 seconds...")
                 self.master.after(2000, lambda: self.drop_piece(None))
+
             else:
                 # If all the games have been played, close the application
                 print("All games played. Closing application.")
                 self.close()
 
     """Displays a message when the game is over."""
+
     def display_game_over_message(self, message):
         restart = tk.messagebox.askyesno("Restart", message + " Would you like to start a new game?")
         if restart:
@@ -137,6 +162,7 @@ class ConnectFourGUI:
             self.close()
 
     """Updates the board."""
+
     def update_board(self):
         for row in range(6):
             for col in range(7):
@@ -148,10 +174,10 @@ class ConnectFourGUI:
                     color = "yellow"
 
                 self.canvas.itemconfig(self.board_circles[row][col], fill=color)
-        self.master.update_idletasks() #lorsque deux minmax jouent plusieurs parties, le canvas ne se met pas à jour sans
-
+        self.master.update_idletasks()  # lorsque deux minmax jouent plusieurs parties, le canvas ne se met pas à jour sans
 
     """Calculates the reward for the current player. Only used for reinforcement learning."""
+
     def calculate_reward_qLearning(self, winner, done):
         if winner == self.game.current_player:
             # Reward to win
@@ -168,6 +194,7 @@ def main():
     root = tk.Tk()
     gui = ConnectFourGUI(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()

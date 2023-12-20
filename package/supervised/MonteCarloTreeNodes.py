@@ -3,7 +3,7 @@ import math
 
 
 class MonteCarloTreeNodes:
-    def __init__(self, board, move=None, parent=None, player=1):
+    def __init__(self, board, move=None, parent=None, player=1, historical_data=None):
         self.board = board
         self.move = move
         self.parent = parent
@@ -11,26 +11,35 @@ class MonteCarloTreeNodes:
         self.wins = 0
         self.visits = 0
         self.untried_moves = self.get_possible_moves(board)
-        self.player = player  # The player who has just moved
+        self.player = player
+        self.historical_data = historical_data
 
     @staticmethod
     def copy_board(board):
         return [row[:] for row in board]
+
     def get_possible_moves(self, board):
-        # Assume that the board is a list of lists, and that a 0 indicates an empty cell
         return [col for col in range(len(board[0])) if board[0][col] == 0]
 
     def select_child(self):
-        # Select a child node using UCB1 formula
         selected_child = None
+        # The more the data in the game_history.json are viable the more you can increase the historical_bias
+        historical_bias = 0.15
         best_value = -float('inf')
         for child in self.children:
-            # Calculate the UCB1 value
-            ucb1_value = child.wins / child.visits + math.sqrt(2) * math.sqrt(math.log(self.visits) / child.visits)
+            ucb1_value = self.calculate_ucb1(child)
+            if child.move in self.historical_data:
+                ucb1_value += self.historical_data[child.move] * historical_bias
             if ucb1_value > best_value:
                 selected_child = child
                 best_value = ucb1_value
         return selected_child
+
+    def calculate_ucb1(self):
+        exploration_param = math.sqrt(2)
+        if self.visits == 0:
+            return float('inf')
+        return self.wins / self.visits + exploration_param * math.sqrt(math.log(self.parent.visits) / self.visits)
 
     def expand(self):
         # Take a move from the untried moves, play it on the board, and add a new node to the children
@@ -41,7 +50,7 @@ class MonteCarloTreeNodes:
         self.children.append(new_node)
         return new_node
 
-    def simulate(self,  max_depth=100):
+    def simulate(self, max_depth=100):
         # Copy the current state to avoid modifying the original board
         current_state = MonteCarloTreeNodes.copy_board(self.board)
         current_player = self.player

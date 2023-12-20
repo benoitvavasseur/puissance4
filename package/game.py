@@ -2,16 +2,21 @@ class ConnectFourGame:
     def __init__(self):
         self.board = [[0 for _ in range(7)] for _ in range(6)]
         self.current_player = 1
+        self.moves = []
 
     """Returns True if the piece was successfully dropped, False otherwise."""
     def drop_piece(self, column):
         for row in reversed(range(6)):
             if self.board[row][column] == 0:
                 self.board[row][column] = self.current_player
+                self.moves.append((self.current_player, column))
                 if not self.check_winner():
                     self.switch_player()
                 return True
         return False
+
+    def get_all_moves(self):
+        return self.moves
 
     """Switches the current player."""
     def switch_player(self):
@@ -48,3 +53,4 @@ class ConnectFourGame:
     def reset_board(self):
         self.board = [[0 for _ in range(7)] for _ in range(6)]
         self.current_player = 1
+        self.moves = []
