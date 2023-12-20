@@ -3,7 +3,7 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 
-from package.reinforcement.qLearning import QLearningAlgorithm
+from puissance4.package.reinforcement.qLearning import QLearningAlgorithm
 from .game import ConnectFourGame
 import time
 
@@ -15,8 +15,11 @@ class ConnectFourGUI:
         self.game = ConnectFourGame()
         self.player1_algorithm = player1_algorithm
         self.player2_algorithm = player2_algorithm
-        self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in
-                        range(7)]
+        if self.player1_algorithm is not None:
+            self.player1_algorithm.num_games_won = 0
+        if self.player2_algorithm is not None:
+            self.player2_algorithm.num_games_won = 0
+        self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
         self.on_close_callbacks = []
         self.num_games = num_games
@@ -54,7 +57,6 @@ class ConnectFourGUI:
         self.master.destroy()
 
     """Creates the widgets."""
-
     def create_widgets(self):
         for i, button in enumerate(self.buttons):
             button.grid(row=0, column=i)
@@ -64,19 +66,16 @@ class ConnectFourGUI:
         self.draw_board()
 
     """Draws the board."""
-
     def draw_board(self):
         self.board_circles = []
         for row in range(6):
             row_circles = []
             for col in range(7):
-                circle = self.canvas.create_oval(col * 100 + 10, row * 100 + 10, col * 100 + 90, row * 100 + 90,
-                                                 fill="white", outline="black")
+                circle = self.canvas.create_oval(col*100+10, row*100+10, col*100+90, row*100+90, fill="white", outline="black")
                 row_circles.append(circle)
             self.board_circles.append(row_circles)
 
     """Drops a piece in the given column."""
-
     def drop_piece(self, col):
         available_columns = [i for i in range(7) if self.game.board[0][i] == 0]
         # Current state before playing
@@ -119,8 +118,8 @@ class ConnectFourGUI:
                 # Recursive call so that the AI plays automatically after a one-second pause
                 self.master.after(500, self.drop_piece, None)
 
-    """Handles the end of the game."""
 
+    """Handles the end of the game."""
     def handle_game_over(self, winner):
         print(f"Game over. Winner: {winner}")
         self.record_game_data(winner)
@@ -128,8 +127,14 @@ class ConnectFourGUI:
         # Displays a message based on the result
         if winner:
             win_text = f"Player {winner} won!"
+            if winner == 1:
+                self.player1_algorithm.num_games_won += 1
+            else :
+                self.player2_algorithm.num_games_won += 1
         else:
             win_text = "It's a draw!"
+
+        self.save_q_tables_if_needed()
 
         # If at least one of the players is human
         if self.player1_algorithm is None or self.player2_algorithm is None:
@@ -141,18 +146,23 @@ class ConnectFourGUI:
 
             # If both players are AIs, check whether the number of games played is less than the total number of games to be played
             if self.games_played < self.num_games:
+                # Resets the board for a new game
                 self.game.reset_board()
                 self.update_board()
-                print("Scheduling next game in 2 seconds...")
-                self.master.after(2000, lambda: self.drop_piece(None))
 
+                # Automatically start the next game
+                print("Game number: ", self.games_played)
+                self.master.after(2000, lambda: self.drop_piece(None))
             else:
                 # If all the games have been played, close the application
                 print("All games played. Closing application.")
+                print("Number of games played: ", self.num_games)
+                print("Number of games won by player 1: ", self.player1_algorithm.num_games_won)
+                print("Number of games won by player 2: ", self.player2_algorithm.num_games_won)
+                print("Number of draws: ", self.num_games - self.player1_algorithm.num_games_won - self.player2_algorithm.num_games_won)
                 self.close()
 
     """Displays a message when the game is over."""
-
     def display_game_over_message(self, message):
         restart = tk.messagebox.askyesno("Restart", message + " Would you like to start a new game?")
         if restart:
@@ -162,7 +172,6 @@ class ConnectFourGUI:
             self.close()
 
     """Updates the board."""
-
     def update_board(self):
         for row in range(6):
             for col in range(7):
@@ -174,10 +183,10 @@ class ConnectFourGUI:
                     color = "yellow"
 
                 self.canvas.itemconfig(self.board_circles[row][col], fill=color)
-        self.master.update_idletasks()  # lorsque deux minmax jouent plusieurs parties, le canvas ne se met pas à jour sans
+        self.master.update_idletasks() #lorsque deux minmax jouent plusieurs parties, le canvas ne se met pas à jour sans
+
 
     """Calculates the reward for the current player. Only used for reinforcement learning."""
-
     def calculate_reward_qLearning(self, winner, done):
         if winner == self.game.current_player:
             # Reward to win
@@ -189,6 +198,12 @@ class ConnectFourGUI:
             # Small penalty to continue play
             return -0.1
 
+    def save_q_tables_if_needed(self):
+        if isinstance(self.player1_algorithm, QLearningAlgorithm):
+            self.player1_algorithm.save_q_table("package/reinforcement/q_table_player1.json")
+
+        if isinstance(self.player2_algorithm, QLearningAlgorithm):
+            self.player2_algorithm.save_q_table("package/reinforcement/q_table_player2.json")
 
 def main():
     root = tk.Tk()
