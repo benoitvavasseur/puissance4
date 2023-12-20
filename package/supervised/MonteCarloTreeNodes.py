@@ -54,7 +54,7 @@ class MonteCarloTreeNodes:
                 self.children.append(new_node)
 
             # Debugging: Print all children after expansion
-            print(f"Children after expansion: {[child.move for child in self.children]}")
+            # print(f"Children after expansion: {[child.move for child in self.children]}")
 
         return self
 
@@ -182,8 +182,8 @@ class MonteCarloTreeNodes:
             self.wins += 1
 
         # Debugging: Print the current node's stats after backpropagation
-        print(
-            f"Backpropagating node: Move = {self.move}, Player = {self.player}, Wins = {self.wins}, Visits = {self.visits}")
+        # print(
+        #     f"Backpropagating node: Move = {self.move}, Player = {self.player}, Wins = {self.wins}, Visits = {self.visits}")
 
         # Recursive backpropagation
         if self.parent:

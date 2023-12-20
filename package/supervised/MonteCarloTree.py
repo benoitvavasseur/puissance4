@@ -81,7 +81,8 @@ class MonteCarloTreeSearch:
         print("Child nodes win/visit ratios:")
         for child in root.children:
             win_ratio = child.wins / child.visits if child.visits > 0 else 0
-            print(f"Column {child.move}: Wins = {child.wins}, Visits = {child.visits}, Win ratio = {win_ratio}")
+            # Debugging print
+            # print(f"Column {child.move}: Wins = {child.wins}, Visits = {child.visits}, Win ratio = {win_ratio}")
             if win_ratio > best_win_ratio:
                 best_win_ratio = win_ratio
                 best_move = child.move
