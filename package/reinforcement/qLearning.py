@@ -8,6 +8,7 @@ class QLearningAlgorithm:
         self.gamma = gamma
         self.epsilon = epsilon
         self.q_table = {}  # initialise with an empty table or load a pre-existing table
+        self.last_saved_q_table = None
 
     """Returns the next move to play."""
     def get_next_move(self, board_state, available_columns):
@@ -61,15 +62,17 @@ class QLearningAlgorithm:
 
     """Saves the Q table in a JSON file."""
     def save_q_table(self, filename):
-        print(f"Saving the Q table in {filename}")
-        try:
-            # Converts each numpy array into a list
-            serializable_q_table = {k: v.tolist() if isinstance(v, np.ndarray) else v for k, v in self.q_table.items()}
+        # Convert the Q table into a serializable format
+        serializable_q_table = {k: (v.tolist() if isinstance(v, np.ndarray) else v) for k, v in self.q_table.items()}
 
+        # Check whether there have been any changes since the last backup
+        if serializable_q_table != self.last_saved_q_table:
             with open(filename, "w") as file:
                 json.dump(serializable_q_table, file)
-        except Exception as e:
-            print(f"Error saving file {filename}: {e}")
+            self.last_saved_q_table = serializable_q_table
+            print(f"Q table saved to {filename}.")
+        else:
+            print("No changes in Q table since last save. Skipping save.")
 
 
     """Loads the Q table from a JSON file."""

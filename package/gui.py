@@ -13,6 +13,8 @@ class ConnectFourGUI:
         self.game = ConnectFourGame()
         self.player1_algorithm = player1_algorithm
         self.player2_algorithm = player2_algorithm
+        self.player1_algorithm.num_games_won = 0
+        self.player2_algorithm.num_games_won = 0
         self.buttons = [tk.Button(self.master, text="Drop", command=lambda col=i: self.drop_piece(col)) for i in range(7)]
         self.create_widgets()
         self.on_close_callbacks = []
@@ -102,8 +104,14 @@ class ConnectFourGUI:
         # Displays a message based on the result
         if winner:
             win_text = f"Player {winner} won!"
+            if winner == 1:
+                self.player1_algorithm.num_games_won += 1
+            else :
+                self.player2_algorithm.num_games_won += 1
         else:
             win_text = "It's a draw!"
+
+        self.save_q_tables_if_needed()
 
         # If at least one of the players is human
         if self.player1_algorithm is None or self.player2_algorithm is None:
@@ -120,11 +128,15 @@ class ConnectFourGUI:
                 self.update_board()
 
                 # Automatically start the next game
-                print("Scheduling next game in 2 seconds...")
+                print("Game number: ", self.games_played)
                 self.master.after(2000, lambda: self.drop_piece(None))
             else:
                 # If all the games have been played, close the application
                 print("All games played. Closing application.")
+                print("Number of games played: ", self.num_games)
+                print("Number of games won by player 1: ", self.player1_algorithm.num_games_won)
+                print("Number of games won by player 2: ", self.player2_algorithm.num_games_won)
+                print("Number of draws: ", self.num_games - self.player1_algorithm.num_games_won - self.player2_algorithm.num_games_won)
                 self.close()
 
     """Displays a message when the game is over."""
@@ -163,6 +175,12 @@ class ConnectFourGUI:
             # Small penalty to continue play
             return -0.1
 
+    def save_q_tables_if_needed(self):
+        if isinstance(self.player1_algorithm, QLearningAlgorithm):
+            self.player1_algorithm.save_q_table("package/reinforcement/q_table_player1.json")
+
+        if isinstance(self.player2_algorithm, QLearningAlgorithm):
+            self.player2_algorithm.save_q_table("package/reinforcement/q_table_player2.json")
 
 def main():
     root = tk.Tk()
