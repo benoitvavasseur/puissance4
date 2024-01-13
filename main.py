@@ -2,7 +2,7 @@ import tkinter as tk
 from package.gui import ConnectFourGUI
 from package.optimization.minMax import MiniMaxAlgorithm
 from package.reinforcement.qLearning import QLearningAlgorithm
-from package.supervised.MonteCarloTree import MonteCarloTreeSearch
+from package.heuristic.MonteCarloTree import MonteCarloTreeSearch
 
 # Agent type configuration
 PLAYER1_TYPE = "QLEARNING"  # Options: "QLEARNING", "MONTECARLO", "MINMAX", "HUMAN"

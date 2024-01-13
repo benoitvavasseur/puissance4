@@ -1,6 +1,6 @@
 import json
 
-from package.supervised.MonteCarloTreeNodes import MonteCarloTreeNodes
+from package.heuristic.MonteCarloTreeNodes import MonteCarloTreeNodes
 from copy import deepcopy
 import time
 
@@ -40,7 +40,6 @@ class MonteCarloTreeSearch:
             if not node.is_fully_expanded():
                 node = node.expand()
 
-            # Now, simulate a game from this new node
             winner = node.simulate()
             node.backpropagate(winner)
             iterations += 1
@@ -90,8 +89,6 @@ class MonteCarloTreeSearch:
         return best_move
 
     def determine_current_player(self, board):
-        # Logic to determine current player from board state
-        # This is a placeholder; you will need to replace this with your own logic
         player1_count = sum(row.count(1) for row in board)
         player2_count = sum(row.count(2) for row in board)
         return 1 if player1_count <= player2_count else 2

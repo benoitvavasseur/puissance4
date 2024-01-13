@@ -23,10 +23,11 @@ class ConnectFourGUI:
         self.on_close_callbacks = []
         self.num_games = num_games
         self.games_played = 0
+        self.sleeptime = 100
 
         # Initiates the first move if both players are AIs
         if self.player1_algorithm is not None and self.player2_algorithm is not None:
-            self.master.after(1000, lambda: self.drop_piece(None))
+            self.master.after(self.sleeptime, lambda: self.drop_piece(None))
 
     def record_game_data(self, winner):
         moves = [(player, int(move)) for player, move in self.game.get_all_moves()]
@@ -112,10 +113,10 @@ class ConnectFourGUI:
             # Check so that the AI automatically plays after the previous player
             if self.player1_algorithm is not None and self.game.current_player == 1:
                 # Recursive call so that the AI plays automatically after a one-second pause
-                self.master.after(500, self.drop_piece, None)
+                self.master.after(self.sleeptime, self.drop_piece, None)
             if self.player2_algorithm is not None and self.game.current_player == 2:
                 # Recursive call so that the AI plays automatically after a one-second pause
-                self.master.after(500, self.drop_piece, None)
+                self.master.after(self.sleeptime, self.drop_piece, None)
 
 
     """Handles the end of the game."""
@@ -149,7 +150,7 @@ class ConnectFourGUI:
 
                 # Automatically start the next game
                 print("Game number: ", self.games_played)
-                self.master.after(2000, lambda: self.drop_piece(None))
+                self.master.after(self.sleeptime, lambda: self.drop_piece(None))
             else:
                 # If all the games have been played, close the application
                 print("All games played. Closing application.")

@@ -44,8 +44,8 @@ class MonteCarloTreeNodes:
         # Only expand if there are untried moves left
         if self.untried_moves:
             move = random.choice(self.untried_moves)
-            self.untried_moves.remove(move)  # Or you can choose randomly
-            new_board, _ = self.play_move(self.board, move, self.player)  # This method must return the new board state
+            self.untried_moves.remove(move)
+            new_board, _ = self.play_move(self.board, move, self.player)
 
             # Ensure that new_board is not None and is a valid board state before proceeding
             if new_board:
